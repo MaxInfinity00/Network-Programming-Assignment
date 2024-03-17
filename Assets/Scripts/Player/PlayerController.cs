@@ -42,10 +42,6 @@ public class PlayerController : NetworkBehaviour, IPlayerActions
         if (turretPivotTransform == null) Debug.LogError("PivotTurret is not found", gameObject);
     }
 
-
-
-
-
     public void OnFire(UnityEngine.InputSystem.InputAction.CallbackContext context)
     {
         if (context.performed)
@@ -69,6 +65,7 @@ public class PlayerController : NetworkBehaviour, IPlayerActions
         _rb.velocity = transform.up * _moveInput.y * movementSpeed;
         _rb.MoveRotation(_rb.rotation + _moveInput.x * -shipRotationSpeed * Time.fixedDeltaTime);
     }
+    
     private void LateUpdate()
     {
         if (!IsOwner) return;
@@ -82,5 +79,19 @@ public class PlayerController : NetworkBehaviour, IPlayerActions
     {
         _cursorLocation = context.ReadValue<Vector2>();
     }
-
+    
+    [ClientRpc]
+    public void PickupSpeedClientRpc()
+    {
+        if(!IsOwner) return;
+        movementSpeed = 7f;
+        shipRotationSpeed = 150f;
+        Invoke(nameof(ResetSpeed), 5f);
+    }
+    
+    public void ResetSpeed()
+    {
+        movementSpeed = 5f;
+        shipRotationSpeed = 100f;
+    }
 }
