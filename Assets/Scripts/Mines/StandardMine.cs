@@ -30,12 +30,7 @@ public class StandardMine : NetworkBehaviour
 
         NetworkObject networkObject = gameObject.GetComponent<NetworkObject>();
         networkObject.Despawn();
-
-
-
     }
-
-
    }
 
 

@@ -13,6 +13,8 @@ public class FiringAction : NetworkBehaviour
     
     [SerializeField] NetworkVariable<int> ammo = new NetworkVariable<int>(10);
     
+    [SerializeField] bool canFire = true;
+    
 
 
     public override void OnNetworkSpawn()
@@ -22,7 +24,6 @@ public class FiringAction : NetworkBehaviour
 
     private void Fire(bool isShooting)
     {
-
         if (isShooting)
         {
             ShootLocalBullet();
@@ -32,10 +33,13 @@ public class FiringAction : NetworkBehaviour
     [ServerRpc]
     private void ShootBulletServerRpc()
     {
-        if (ammo.Value <= 0) return;
+        if (ammo.Value <= 0 || !canFire) return;
         GameObject bullet = Instantiate(serverSingleBulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
         Physics2D.IgnoreCollision(bullet.GetComponent<Collider2D>(), transform.GetComponent<Collider2D>());
         ammo.Value--; 
+        canFire = false;
+        Invoke(nameof(CanFireAgain), 0.5f);
+        
         ShootBulletClientRpc();
     }
 
@@ -50,10 +54,12 @@ public class FiringAction : NetworkBehaviour
 
     private void ShootLocalBullet()
     {
-        if (ammo.Value <= 0) return;
+        if (ammo.Value <= 0 || !canFire) return;
         
         GameObject bullet = Instantiate(clientSingleBulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
         Physics2D.IgnoreCollision(bullet.GetComponent<Collider2D>(), transform.GetComponent<Collider2D>());
+        canFire = false;
+        Invoke(nameof(CanFireAgain), 0.5f);
 
         ShootBulletServerRpc();
     }
@@ -61,5 +67,10 @@ public class FiringAction : NetworkBehaviour
     public void PickupAmmo()
     {
         ammo.Value = 10;
+    }
+    
+    public void CanFireAgain()
+    {
+        canFire = true;
     }
 }

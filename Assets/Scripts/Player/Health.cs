@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public class Health : NetworkBehaviour
@@ -8,12 +9,19 @@ public class Health : NetworkBehaviour
     public NetworkVariable<int> currentHealth = new NetworkVariable<int>();
     
     public NetworkVariable<int> shield = new NetworkVariable<int>(0);
+    
+    public NetworkVariable<int> lives = new NetworkVariable<int>(3);
+    
+    public NetworkTransform networkTransform;
 
 
     public override void OnNetworkSpawn()
     {
         if(!IsServer) return;
         currentHealth.Value = 100;
+        shield.Value = 2;
+        lives.Value = 3;
+        networkTransform = GetComponent<NetworkTransform>();
     }
 
 
@@ -40,11 +48,26 @@ public class Health : NetworkBehaviour
     }
     
     public void Die(){
-        if(IsServer){
-            NetworkObject networkObject = gameObject.GetComponent<NetworkObject>();
-            networkObject.Despawn();
+        if (IsServer)
+        {
+            lives.Value--;
+            if (lives.Value <= 0)
+            {
+                NetworkObject networkObject = gameObject.GetComponent<NetworkObject>();
+                networkObject.Despawn();
+            }
+            else
+            {
+                currentHealth.Value = 100;
+                RelocateClientRpc();
+            }
         }
     }
-    
 
+    [ClientRpc]
+    public void RelocateClientRpc()
+    {
+        if(!IsOwner) return;
+        transform.position = new Vector2(Random.Range(-4, 4),Random.Range(-2, 2));
+    }
 }
